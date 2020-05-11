@@ -1,0 +1,37 @@
+version: '3.7'
+services:
+  lb:
+    image: 'openresty/openresty:buster-fat'
+    volumes:
+      - ./lb/nginx/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+      - ./lb/nginx/conf.d:/etc/nginx/conf.d
+      - ./lb/dlb:/usr/local/openresty/dlb
+    ports:
+      - 8888:80
+    networks:
+      internal:
+        aliases:
+          - lb
+  backend1:
+    image: 'openresty/openresty:buster-fat'
+    volumes:
+      - ./backend1/nginx/conf.d:/etc/nginx/conf.d
+    ports:
+      - 9000:80
+    networks:
+      internal:
+        aliases:
+          - backend1
+  backend2:
+    image: 'openresty/openresty:buster-fat'
+    volumes:
+      - ./backend2/nginx/conf.d:/etc/nginx/conf.d
+    ports:
+      - 9001:80
+    networks:
+      internal:
+        aliases:
+          - backend2
+
+networks:
+  internal:
