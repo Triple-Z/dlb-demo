@@ -10,28 +10,30 @@ services:
       - 8888:80
     networks:
       internal:
+        ipv4_address: 172.28.0.100
         aliases:
           - lb
   backend1:
     image: 'openresty/openresty:buster-fat'
     volumes:
       - ./backend1/nginx/conf.d:/etc/nginx/conf.d
-    ports:
-      - 9000:80
     networks:
       internal:
+        ipv4_address: 172.28.0.101
         aliases:
           - backend1
   backend2:
     image: 'openresty/openresty:buster-fat'
     volumes:
       - ./backend2/nginx/conf.d:/etc/nginx/conf.d
-    ports:
-      - 9001:80
     networks:
       internal:
+        ipv4_address: 172.28.0.102
         aliases:
           - backend2
 
 networks:
   internal:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
