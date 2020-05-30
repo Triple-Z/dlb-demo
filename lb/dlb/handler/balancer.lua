@@ -6,7 +6,7 @@ local _M = {
 
 local function main()
     local state, status = balancer.get_last_failure()
-    print("last peer failure: ", state, " ", status)
+    ngx.log(ngx.DEBUG, "last peer failure: ", state, " ", status)
     if not ngx.ctx.tries then
         ngx.ctx.tries = 0
     end
@@ -14,9 +14,10 @@ local function main()
     if ngx.ctx.tries < 2 then
         local ok, err = balancer.set_more_tries(1)
         if not ok then
-            return error("failed to set more tries: ", err)
+            ngx.log(ngx.ERR, "failed to set more tries: ", err)
+            return ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
         elseif err then
-            ngx.log(ngx.WARN, "set more tries: ", err)
+            ngx.log(ngx.NOTICE, "set more tries: ", err)
         end
     end
     ngx.ctx.tries = ngx.ctx.tries + 1

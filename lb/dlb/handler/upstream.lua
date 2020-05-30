@@ -7,9 +7,43 @@ local _M = {
 local counter = 0
 
 -- Round robin
+--@param upstream table  upstream info.
+--@return number  server index in upstream table.
 local function round_robin(upstream)
-    local server_num = #(upstream.servers) or 1
+    local server_num = #(upstream.servers)
+    if not server_num or server_num == 0 then
+        ngx.log(ngx.ERR, "the number of server is NIL or ZERO!")
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
     counter = counter % server_num + 1
+    return counter
+end
+
+local weight_servers = nil
+-- Weighted round robin
+--@param upstream table  upstream info.
+--@return number  server index in upstream table.
+local function weighted_round_robin(upstream)
+    if not weight_servers then
+        -- init the weights array
+        weight_servers = {}
+        for i, server in ipairs(upstream.servers) do
+            for j = 1, server.weight do
+                server.index = i
+                weight_servers[#weight_servers + 1] = server
+                ngx.log(ngx.DEBUG, "init the ", #weight_servers, " server")
+            end
+        end
+        ngx.log(ngx.DEBUG, "weighted inited")
+    end
+
+    local server_num = #weight_servers
+    if not server_num or server_num == 0 then
+        ngx.log(ngx.ERR, "the number of server is NIL or ZERO!")
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
+    counter = counter % server_num + 1
+    return weight_servers[counter].index
 end
 
 local function get_balance_algo(algo_str)
@@ -18,7 +52,8 @@ local function get_balance_algo(algo_str)
     end
 
     local balance_algo = {
-        rr = round_robin
+        rr = round_robin,
+        wrr = weighted_round_robin
     }
 
     local cur_algo = balance_algo[string.lower(algo_str)]
@@ -32,22 +67,18 @@ end
 
 local function main()
     -- upstream info
-    -- set peer & timeouts
-    -- failover
-    -- TODO: Weighted RR
-
     local upstream = {
-        lb_method = "rr",
+        lb_method = "wrr",
         servers = {
             {
                 host = "172.28.0.101",
                 port = 80,
-                weight = 1,
+                weight = 3
             },
             {
                 host = "172.28.0.102",
                 port = 80,
-                weight = 2,
+                weight = 2
             }
         },
         timeouts = {
@@ -64,12 +95,12 @@ local function main()
     local selected_index = get_balance_algo(upstream.lb_method)(upstream)
     ngx.log(ngx.DEBUG, "get selected index: ", selected_index)
 
-    cur_server = upstream.servers[counter]
+    cur_server = upstream.servers[selected_index]
 
     local host = cur_server.host
     local port = cur_server.port
-    ngx.log(ngx.INFO, "cur host is ", tostring(host))
-    ngx.log(ngx.INFO, "cur port is ", tostring(port))
+    ngx.log(ngx.DEBUG, "cur host is ", tostring(host))
+    ngx.log(ngx.DEBUG, "cur port is ", tostring(port))
 
     if (not host) or (not port) then
         ngx.log(ngx.ERR, "can NOT get the upstream ip or port!")

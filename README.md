@@ -14,11 +14,14 @@ $ docker-compose up
 
 Then visit the http://localhost:8888 continuously, you will find out the response content number is changing all the time :P
 
-> Or use `curl http://localhost:8888` instead.
+> Or use `for i in {1..10}; do curl http://localhost:8888; done` instead.
 
 ## TODO
 
-- [ ] weighted round-robin
+- [x] Round-robin
+- [x] weighted round-robin
+- [ ] smooth weighted round-robin
+- [ ] Health check
 - [ ] IP hash
 - [ ] consistency hash
 
