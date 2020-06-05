@@ -31,6 +31,15 @@ services:
         ipv4_address: 172.28.0.102
         aliases:
           - backend2
+  backend3:
+    image: 'openresty/openresty:buster-fat'
+    volumes:
+      - ./backend3/nginx/conf.d:/etc/nginx/conf.d
+    networks:
+      internal:
+        ipv4_address: 172.28.0.103
+        aliases:
+          - backend3
 
 networks:
   internal:

@@ -46,6 +46,42 @@ local function weighted_round_robin(upstream)
     return weight_servers[counter].index
 end
 
+local sw_array = nil
+local weight_total = 0
+local function smooth_weighted_round_robin(upstream)
+    if #upstream.servers <= 1 then
+        return 1
+    end
+
+    if not sw_array then
+        -- init the weights array
+        sw_array = {}
+        for i, server in ipairs(upstream.servers) do
+            sw_array[i] = server.weight
+            weight_total = weight_total + server.weight
+        end
+    end
+
+    -- find the max server number
+    local max_weight = sw_array[1]
+    local max_index = 1
+    for i, cur_weight in ipairs(sw_array) do
+        if max_weight < cur_weight then
+            max_weight = cur_weight
+            max_index = i
+        end
+    end
+
+    -- selected server weight minus total weight
+    sw_array[max_index] = sw_array[max_index] - weight_total
+    -- all servers weight add themselves
+    for i, server in ipairs(upstream.servers) do
+        sw_array[i] = sw_array[i] + server.weight
+    end
+
+    return max_index
+end
+
 local function get_balance_algo(algo_str)
     if not algo_str then
         algo_str = "rr"
@@ -53,7 +89,8 @@ local function get_balance_algo(algo_str)
 
     local balance_algo = {
         rr = round_robin,
-        wrr = weighted_round_robin
+        wrr = weighted_round_robin,
+        swrr = smooth_weighted_round_robin
     }
 
     local cur_algo = balance_algo[string.lower(algo_str)]
@@ -68,18 +105,23 @@ end
 local function main()
     -- upstream info
     local upstream = {
-        lb_method = "wrr",
+        lb_method = "rr",
         servers = {
             {
                 host = "172.28.0.101",
                 port = 80,
-                weight = 3
+                weight = 5,
             },
             {
                 host = "172.28.0.102",
                 port = 80,
-                weight = 2
-            }
+                weight = 2,
+            },
+            {
+                host = "172.28.0.103",
+                port = 80,
+                weight = 2,
+            },
         },
         timeouts = {
             -- in seconds
@@ -96,6 +138,10 @@ local function main()
     ngx.log(ngx.DEBUG, "get selected index: ", selected_index)
 
     cur_server = upstream.servers[selected_index]
+
+    if not cur_server then
+        ngx.log(ngx.ERR, "cannot get server")
+    end
 
     local host = cur_server.host
     local port = cur_server.port
