@@ -1,8 +1,16 @@
+<!-- omit in toc -->
 # DLB Demo
 
 Dynamic Load Balancing demo for introducing OpenResty.
 
 First used in [#18 A2OS Weekly](https://github.com/NUAA-Open-Source/weekly/issues/7).
+
+<!-- omit in toc -->
+## Table of Contents
+- [Quickstart](#quickstart)
+- [Example Results](#example-results)
+- [TODO](#todo)
+- [Copyright](#copyright)
 
 ## Quickstart
 
