@@ -29,8 +29,7 @@ local function weighted_round_robin(upstream)
         weight_servers = {}
         for i, server in ipairs(upstream.servers) do
             for j = 1, server.weight do
-                server.index = i
-                weight_servers[#weight_servers + 1] = server
+                weight_servers[#weight_servers + 1] = i
                 ngx.log(ngx.DEBUG, "init the ", #weight_servers, " server")
             end
         end
@@ -43,7 +42,7 @@ local function weighted_round_robin(upstream)
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
     counter = counter % server_num + 1
-    return weight_servers[counter].index
+    return weight_servers[counter]
 end
 
 local sw_array = nil
@@ -105,7 +104,7 @@ end
 local function main()
     -- upstream info
     local upstream = {
-        lb_method = "rr",
+        lb_method = "swrr",
         servers = {
             {
                 host = "172.28.0.101",
@@ -115,7 +114,7 @@ local function main()
             {
                 host = "172.28.0.102",
                 port = 80,
-                weight = 2,
+                weight = 3,
             },
             {
                 host = "172.28.0.103",

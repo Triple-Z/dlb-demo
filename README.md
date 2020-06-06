@@ -38,7 +38,7 @@ servers = {
     {
         host = "172.28.0.102",
         port = 80,
-        weight = 2, -- backend 2
+        weight = 3, -- backend 2
     },
     {
         host = "172.28.0.103",
@@ -73,21 +73,21 @@ response from backend 1
 response from backend 1
 response from backend 2
 response from backend 2
+response from backend 2
 response from backend 3
 response from backend 3
-response from backend 1
 
 # Smooth weighted round-robin (swrr)
 $ for i in {1..10} ; do curl http://localhost:8888 ; done
 response from backend 1
 response from backend 2
-response from backend 1
 response from backend 3
 response from backend 1
 response from backend 1
 response from backend 2
-response from backend 3
 response from backend 1
+response from backend 3
+response from backend 2
 response from backend 1
 ```
 
